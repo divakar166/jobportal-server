@@ -11,7 +11,6 @@ def send_verification_email(email, token, user_type):
     "Authorization": f"Bearer {RESEND_API_KEY}",
     "Content-Type": "application/json"
   }
-  print(RESEND_API_KEY)
   payload = {
     "from": "info@divakarsingh.online",
     "to": email,

@@ -10,7 +10,7 @@ import jwt
 import datetime
 from django.http import JsonResponse
 from django.utils.crypto import get_random_string
-
+from .signals import developer_registered
 
 class RegisterView(APIView):
     authentication_classes = []
@@ -34,32 +34,18 @@ class RegisterView(APIView):
                 expires=expires_at,
             )
 
-            # Send verification email
-            try:
-                status_code, response_data = send_verification_email(
-                    developer.email, token, "developer"
-                )
-                if status_code == 200:
-                    return Response(
-                        {"message": "Registered successfully! Verification email sent."},
-                        status=status.HTTP_201_CREATED,
-                    )
-                else:
-                    return Response(
-                        {
-                            "message": "Registered but failed to send verification email.",
-                            "error": response_data,
-                        },
-                        status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    )
-            except Exception as e:
-                return Response(
-                    {
-                        "message": "Registered but an error occurred while sending verification email.",
-                        "error": str(e),
-                    },
-                    status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                )
+            developer_registered.send(
+                sender=self.__class__,
+                email=developer.email,
+                token=token,
+                role="developer"
+            )
+
+            return Response(
+                {"message": "Registered successfully! Verification email sent."},
+                status=status.HTTP_201_CREATED,
+            )
+        
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -77,6 +63,22 @@ class LoginView(APIView):
             return Response({"error": "User doesn't exist!"}, status=status.HTTP_404_NOT_FOUND)
 
         if not developer.email_verified:
+            verification_token = VerificationToken.objects.get(email=email)
+            if verification_token.has_expired():
+                verification_token.delete()
+                token = get_random_string(32)
+                expires_at = timezone.now() + datetime.timedelta(hours=24)
+                VerificationToken.objects.create(
+                    email=developer.email,
+                    token=token,
+                    expires=expires_at,
+                )
+                developer_registered.send(
+                    sender=self.__class__,
+                    email=developer.email,
+                    token=token,
+                    role="developer"
+                )
             return Response({"error": "Verify email!"}, status=status.HTTP_403_FORBIDDEN)
 
         if not developer.check_password(password):
@@ -113,6 +115,7 @@ class DeveloperVerifyToken(APIView):
                 return Response({"error": "Token does not exist!"}, status=status.HTTP_404_NOT_FOUND)
 
             if verification_token.has_expired():
+                print("Token has expired!")
                 return Response({"error": "Token has expired!"}, status=status.HTTP_400_BAD_REQUEST)
 
             developer = Developer.objects.filter(email=verification_token.email).first()
@@ -126,6 +129,7 @@ class DeveloperVerifyToken(APIView):
 
             return Response({"success": "Email successfully verified!"}, status=status.HTTP_200_OK)
         except Exception as e:
+            print(e)
             return Response(
                 {"error": f"An error occurred: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )

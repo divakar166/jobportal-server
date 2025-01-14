@@ -6,6 +6,7 @@ import jwt
 import uuid
 from datetime import datetime, timedelta
 from django.conf import settings
+from django.utils.timezone import now
 
 
 class Developer(models.Model):
@@ -61,4 +62,4 @@ class VerificationToken(models.Model):
     return f"Token for {self.email} - expires at {self.expires}"
 
   def has_expired(self):
-    return datetime.utcnow() > self.expires
+    return self.expires < now()
