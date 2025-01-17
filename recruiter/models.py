@@ -9,18 +9,18 @@ from django.conf import settings
 from django.utils.timezone import now
 
 
-class Developer(models.Model):
+class Recruiter(models.Model):
   id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
   name = models.CharField(max_length=255)
   email = models.EmailField(unique=True, db_index=True)
-  mobile = models.CharField(max_length=15, null=True, blank=True)
+  mobile = models.CharField(max_length=15, unique=True)
   image = models.URLField(null=True, blank=True)
   password = models.CharField(max_length=255)
   created_at = models.DateTimeField(auto_now_add=True)
   updated_at = models.DateTimeField(auto_now=True)
 
   class Meta:
-    db_table = "developers"
+    db_table = "recruiters"
 
   def __str__(self):
     return f"{self.name} ({self.email})"
