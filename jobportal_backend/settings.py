@@ -46,7 +46,8 @@ INSTALLED_APPS = [
     'corsheaders',
     'developer',
     'recruiter',
-    'helpers'
+    'helpers',
+    'jobs'
 ]
 
 CORS_ALLOW_ALL_ORIGINS = True
