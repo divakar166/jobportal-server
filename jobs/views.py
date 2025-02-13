@@ -7,14 +7,17 @@ from django.conf import settings
 from jobs.models import JobListing
 from jobs.serializers import JobListingSerializer
 from recruiter.models import Recruiter
+from rest_framework.permissions import IsAuthenticated
 from datetime import datetime
 
 class AddJobView(APIView):
+  authentication_classes = []
+  permission_classes = []
   def post(self, request):
     token = request.headers.get("Authorization")
     if not token:
       return Response({"error": "Authentication token is required"}, status=status.HTTP_401_UNAUTHORIZED)
-    
+    print(request.data.get("start_date"))
     try:
       decoded_token = jwt.decode(token.split(" ")[1], settings.SECRET_KEY, algorithms=["HS256"])
       recruiter_id = decoded_token.get("id")

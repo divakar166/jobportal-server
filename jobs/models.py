@@ -9,15 +9,15 @@ class JobListing(models.Model):
   
   job_title = models.CharField(max_length=255)
   job_type = models.CharField(max_length=50, choices=[
-    ('Full-Time', 'Full-Time'),
-    ('Part-Time', 'Part-Time'),
-    ('Internship', 'Internship')
+    ('full_time', 'Full-Time'),
+    ('part_time', 'Part-Time'),
+    ('internship', 'Internship')
   ])
   
   job_location = models.CharField(max_length=255, choices=[
-    ('On-Site', 'On-Site'),
-    ('Remote', 'Remote'),
-    ('Hybrid', 'Hybrid')
+    ('onsite', 'On-Site'),
+    ('remote', 'Remote'),
+    ('hybrid', 'Hybrid')
   ])
   company_name = models.CharField(max_length=255)
   location = models.CharField(max_length=255)
@@ -30,7 +30,7 @@ class JobListing(models.Model):
   apply_by = models.DateField(null=True, blank=True)
 
   openings = models.PositiveIntegerField(default=1)
-  description = models.TextField()
+  about = models.TextField()
 
   created_at = models.DateTimeField(auto_now_add=True)
   updated_at = models.DateTimeField(auto_now=True)
