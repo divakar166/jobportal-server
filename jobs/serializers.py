@@ -32,3 +32,8 @@ class JobListingSerializer(serializers.ModelSerializer):
           raise serializers.ValidationError(f"Invalid date format: {value}. Use YYYY-MM-DD.")
 
     return value
+  
+class JobListingRecruiterSerializer(serializers.ModelSerializer):
+  class Meta:
+    model = JobListing
+    fields = "__all__"
