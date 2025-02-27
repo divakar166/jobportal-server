@@ -73,3 +73,28 @@ class JobListingRecruiterCountView(APIView):
     recruiter_id = decoded_token.get("id")
     count = JobListing.objects.filter(recruiter=recruiter_id).count()
     return Response({"count": count}, status=status.HTTP_200_OK)
+
+class DeleteJobView(APIView):
+  authentication_classes = []
+  permission_classes = []
+  
+  def delete(self, request, job_id):
+    token = request.headers.get("Authorization")
+    if not token:
+      return Response({"error": "Authentication token is required"}, status=status.HTTP_401_UNAUTHORIZED)
+    
+    try:
+      decoded_token = jwt.decode(token.split(" ")[1], settings.SECRET_KEY, algorithms=["HS256"])
+      recruiter_id = decoded_token.get("id")
+    except jwt.ExpiredSignatureError:
+      return Response({"error": "Token expired!"}, status=status.HTTP_401_UNAUTHORIZED)
+    except jwt.InvalidTokenError:
+      return Response({"error": "Invalid token!"}, status=status.HTTP_401_UNAUTHORIZED)
+    
+    try:
+      job = JobListing.objects.get(id=job_id, recruiter=recruiter_id)
+    except JobListing.DoesNotExist:
+      return Response({"error": "Job not found or unauthorized access"}, status=status.HTTP_404_NOT_FOUND)
+    
+    job.delete()
+    return Response({"message": "Job deleted successfully!"}, status=status.HTTP_200_OK)
