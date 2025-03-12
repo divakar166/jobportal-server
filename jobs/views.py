@@ -1,14 +1,12 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from django.http import JsonResponse
 import jwt
 from django.conf import settings
 from jobs.models import JobListing
-from jobs.serializers import JobListingSerializer, JobListingRecruiterSerializer
-from recruiter.models import Recruiter
-from rest_framework.permissions import IsAuthenticated
-from datetime import datetime
+from jobs.serializers import JobListingSerializer, JobListingRecruiterSerializer, PartialJobListingSerializer
+from django.shortcuts import get_object_or_404
+from uuid import UUID
 
 class AddJobView(APIView):
   authentication_classes = []
@@ -98,3 +96,36 @@ class DeleteJobView(APIView):
     
     job.delete()
     return Response({"message": "Job deleted successfully!"}, status=status.HTTP_200_OK)
+  
+class EditJobView(APIView):
+  authentication_classes = []
+  permission_classes = []
+
+  def patch(self, request, job_id):
+    token = request.headers.get("Authorization")
+    if not token:
+      return Response({"error": "Authentication token is required"}, status=status.HTTP_401_UNAUTHORIZED)
+      
+    try:
+      decoded_token = jwt.decode(token.split(" ")[1], settings.SECRET_KEY, algorithms=["HS256"])
+      recruiter_id = UUID(decoded_token.get("id"))
+    except jwt.ExpiredSignatureError:
+      return Response({"error": "Token expired!"}, status=status.HTTP_401_UNAUTHORIZED)
+    except jwt.InvalidTokenError:
+      return Response({"error": "Invalid token!"}, status=status.HTTP_401_UNAUTHORIZED)
+    
+    try:
+      job = get_object_or_404(JobListing, id=job_id)
+
+      if job.recruiter.id != recruiter_id:
+          return Response({"error": "You do not have permission to edit this job."}, status=status.HTTP_403_FORBIDDEN)
+
+      serializer = PartialJobListingSerializer(job, data=request.data, partial=True)  # Partial update
+      if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
+      
+      return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+      
+    except Exception as e:
+      return Response({"message": "Server Error"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

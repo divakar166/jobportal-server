@@ -39,6 +39,7 @@ class Recruiter(models.Model):
     payload = {
       'id': str(self.id),
       'email': self.email,
+      'role': 'recruiter',
       'exp': datetime.utcnow() + timedelta(days=1),
       'iat': datetime.utcnow()
     }

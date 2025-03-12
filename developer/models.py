@@ -39,6 +39,7 @@ class Developer(models.Model):
     payload = {
       'id': str(self.id),
       'email': self.email,
+      'role': 'developer',
       'exp': datetime.utcnow() + timedelta(days=1),
       'iat': datetime.utcnow()
     }

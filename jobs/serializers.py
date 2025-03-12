@@ -11,9 +11,8 @@ class JobListingSerializer(serializers.ModelSerializer):
 
   def validate(self, data):
     """Custom validation to ensure `apply_by` date is after `start_date`."""
-    start_date = self._convert_date(data.get("start_date"))
-    apply_by = self._convert_date(data.get("apply_by"))
-    print(start_date, apply_by)
+    self._convert_date(data.get("start_date"))
+    self._convert_date(data.get("apply_by"))
 
     if data["start_date"] and data["apply_by"] and data["apply_by"] <= data["start_date"]:
       raise serializers.ValidationError({"apply_by": "Apply by date must be after the start date."})
@@ -37,3 +36,11 @@ class JobListingRecruiterSerializer(serializers.ModelSerializer):
   class Meta:
     model = JobListing
     fields = "__all__"
+
+class PartialJobListingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = JobListing
+        fields = ["job_title", "company_name", "salary", "job_type", "job_location"]
+
+    def validate(self, data):
+        return data
