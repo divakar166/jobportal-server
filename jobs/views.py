@@ -7,6 +7,7 @@ from jobs.models import JobListing
 from jobs.serializers import JobListingSerializer, JobListingRecruiterSerializer, PartialJobListingSerializer
 from django.shortcuts import get_object_or_404
 from uuid import UUID
+from django.utils.timezone import now
 
 class AddJobView(APIView):
   authentication_classes = []
@@ -63,14 +64,32 @@ class JobListingRecruiterView(APIView):
 class JobListingRecruiterCountView(APIView):
   authentication_classes = []
   permission_classes = []
+
   def get(self, request):
     token = request.headers.get("Authorization")
     if not token:
       return Response({"error": "Authentication token is required"}, status=status.HTTP_401_UNAUTHORIZED)
-    decoded_token = jwt.decode(token.split(" ")[1], settings.SECRET_KEY, algorithms=["HS256"])
-    recruiter_id = decoded_token.get("id")
-    count = JobListing.objects.filter(recruiter=recruiter_id).count()
-    return Response({"count": count}, status=status.HTTP_200_OK)
+
+    try:
+      decoded_token = jwt.decode(token.split(" ")[1], settings.SECRET_KEY, algorithms=["HS256"])
+      recruiter_id = decoded_token.get("id")
+
+      # Fetch job listings for this recruiter
+      job_listings = JobListing.objects.filter(recruiter=recruiter_id)
+      total_count = job_listings.count()
+
+      # Classify jobs as active or expired based on apply_by date
+      active_count = job_listings.filter(apply_by__gte=now().date()).count()
+      expired_count = job_listings.filter(apply_by__lt=now().date()).count()
+
+      return Response(
+        {"total": total_count, "active": active_count, "expired": expired_count},
+        status=status.HTTP_200_OK
+      )
+    except jwt.ExpiredSignatureError:
+      return Response({"error": "Token has expired"}, status=status.HTTP_401_UNAUTHORIZED)
+    except jwt.InvalidTokenError:
+      return Response({"error": "Invalid token"}, status=status.HTTP_401_UNAUTHORIZED)
 
 class DeleteJobView(APIView):
   authentication_classes = []
