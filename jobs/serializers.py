@@ -3,8 +3,8 @@ from jobs.models import JobListing
 from datetime import datetime
 
 class JobListingSerializer(serializers.ModelSerializer):
-  start_date = serializers.DateTimeField(format="%Y-%m-%d", input_formats=["%Y-%m-%dT%H:%M:%S.%fZ", "%Y-%m-%d"], required=False)
-  apply_by = serializers.DateTimeField(format="%Y-%m-%d", input_formats=["%Y-%m-%dT%H:%M:%S.%fZ", "%Y-%m-%d"], required=False)
+  start_date = serializers.DateField(format="%Y-%m-%d", input_formats=["%Y-%m-%dT%H:%M:%S.%fZ", "%Y-%m-%d"], required=False)
+  apply_by = serializers.DateField(format="%Y-%m-%d", input_formats=["%Y-%m-%dT%H:%M:%S.%fZ", "%Y-%m-%d"], required=False)
   class Meta:
     model = JobListing
     fields = "__all__"
